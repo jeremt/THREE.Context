@@ -9,6 +9,8 @@ THREE = THREE || {};
 THREE.Context = function () {
   var self = this;
 
+  // Inherite from eventDispatcher.
+
   THREE.EventDispatcher.call(this);
 
   this.paused = false;
@@ -16,7 +18,13 @@ THREE.Context = function () {
   // Create html container.
 
   var container = document.createElement('div');
+  container.className = "threejs-container";
   document.body.appendChild(container);
+
+  // Create a clock.
+
+  this.clock = new THREE.Clock();
+  this.clock.start();
 
   // Create camera.
 
@@ -42,21 +50,40 @@ THREE.Context = function () {
 
 }
 
+/**
+ * Inherite from THREE.EventDispatcher.
+ */
 THREE.Context.prototype = Object.create(THREE.EventDispatcher.prototype);
 
-THREE.Context.prototype.pause = function () {
-  this.paused = true;
-}
-
-THREE.Context.prototype.play = function () {
-  this.paused = false;
+/**
+ * Reset the context to restart the application.
+ */
+THREE.Context.prototype.reset = function () {
+  // TODO
 }
 
 /**
- * Set fps.
+ * Pause the application.
  */
-THREE.Context.prototype.setFPS = function (fps) {
-  this.fps = fps;
+THREE.Context.prototype.pause = function () {
+  this.paused = true;
+  this.dispatchEvent({type: "pause"});
+}
+
+/**
+ * Quit the application.
+ */
+THREE.Context.prototype.quit = function () {
+  this.paused = true;
+  this.dispatchEvent({type: "quit"});
+}
+
+/**
+ * Play the application.
+ */
+THREE.Context.prototype.play = function () {
+  this.paused = false;
+  this.dispatchEvent({type: "play"});
 }
 
 /**
@@ -64,22 +91,15 @@ THREE.Context.prototype.setFPS = function (fps) {
  */
 THREE.Context.prototype.start = function () {
   var self = this;
-  var then = new Date().getTime();
-
-  this.fps || (this.fps = 60);
-  var interval = 1000 / this.fps;
   this.dispatchEvent({type: "start"});
   ~function animate() {
     requestAnimationFrame(animate);
-    var now = new Date().getTime();
-    var delta = now - then;
-
-    if (delta > interval) {
-      then = now - (delta % interval);
-      self.dispatchEvent({type: "frame", deltaTime: delta});
-      if (!this.paused)
-        self.renderer.render(self.scene, self.camera);
-    }
+    self.dispatchEvent({
+      type: "frame",
+      deltaTime: self.clock.getDelta()
+    });
+    if (!this.paused)
+      self.renderer.render(self.scene, self.camera);
   }();
 }
 
