@@ -1,3 +1,7 @@
+/**
+ * THREE.Context
+ * @author jeremt / https://github.com/jeremt/
+ */
 
 ~function () {
 
@@ -14,6 +18,7 @@ THREE.Context = function () {
   THREE.EventDispatcher.call(this);
 
   this.paused = false;
+  this.controls = null;
 
   // Create html container.
 
@@ -47,6 +52,14 @@ THREE.Context = function () {
     self.camera.updateProjectionMatrix();
     self.renderer.setSize(window.innerWidth, window.innerHeight);
   }, false);
+
+  window.addEventListener('blur', function () {
+    self.pause();
+  });
+
+  window.addEventListener('focus', function () {
+    self.play();
+  });
 
 }
 
@@ -94,9 +107,12 @@ THREE.Context.prototype.start = function () {
   this.dispatchEvent({type: "start"});
   ~function animate() {
     requestAnimationFrame(animate);
+    var delta = self.clock.getDelta();
+    if (self.controls)
+      self.controls.update(delta);
     self.dispatchEvent({
       type: "frame",
-      deltaTime: self.clock.getDelta()
+      deltaTime: delta
     });
     if (!this.paused)
       self.renderer.render(self.scene, self.camera);
